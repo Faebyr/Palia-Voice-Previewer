@@ -90,126 +90,136 @@ async function playAudio(parts: AudioFileParts, audioPlayer: HTMLAudioElement) {
   return audioPlayer.play();
 }
 
-function createAudioPlayerForm(root: Node) {
-  const voiceForm = document.createElement("form");
-  voiceForm.id = "voices";
+let lastPlayedAudio: AudioFileParts | null = null;
 
-  const eventSelector = document.createElement("select");
-  eventSelector.id = "event-selector";
-  eventSelector.name = "event";
+const player = document.getElementById("audio_player") as HTMLAudioElement;
 
-  playerEvents.forEach((event) => {
-    const option = document.createElement("option");
-    option.value = event;
-    if (option.value === "voice_select") {
-      option.selected = true;
+if (!player) {
+  throw new Error("Audio player not found.");
+}
+
+function setAllNotPlaying() {
+  [...document.getElementsByTagName("voice-option")].forEach((el) => {
+    el.removeAttribute("playing");
+  });
+}
+
+player.addEventListener("ended", () => {
+  setAllNotPlaying();
+});
+
+player.addEventListener("play", () => {
+  setAllNotPlaying();
+  const playingVoiceType = lastPlayedAudio?.voiceType;
+
+  if (!playingVoiceType) {
+    return;
+  }
+
+  const voiceOption = document.querySelector<VoiceOption>(
+    "voice-option[type='" + playingVoiceType + "']"
+  );
+
+  if (voiceOption) {
+    voiceOption.setAttribute("playing", "true");
+  }
+});
+
+const stylesheet = new CSSStyleSheet();
+
+stylesheet.replaceSync(`
+  .audio-icon {
+    cursor: pointer;
+    margin-left: 8px;
+    margin-right: -8px;
+    display: inline-block;
+  }
+`);
+
+class VoiceOption extends HTMLElement {
+  static observedAttributes = ["playing"];
+
+  private shadow: ShadowRoot;
+  private icon = document.createElement("span");
+
+  constructor() {
+    super();
+    this.shadow = this.attachShadow({ mode: "open" });
+    this.shadow.textContent = this.textContent || "";
+
+    this.shadow.appendChild(this.icon);
+    this.icon.className = "audio-icon";
+    this.icon.textContent = "🔈";
+    this.icon.style.visibility = "hidden";
+    this.tabIndex = 0;
+
+    this.shadow.adoptedStyleSheets = [stylesheet];
+  }
+
+  attributeChangedCallback(
+    name: string,
+    _oldValue: string | null,
+    newValue: string | null
+  ) {
+    if (name === "playing") {
+      if (newValue) {
+        this.icon.textContent = "🔊";
+        this.icon.style.visibility = "visible";
+      } else {
+        this.icon.textContent = "🔈";
+        this.icon.style.visibility = "hidden";
+      }
     }
-    option.textContent = event.replace(/_/g, " ");
-    eventSelector.appendChild(option);
-  });
+  }
 
-  const randomOption = document.createElement("option");
-  randomOption.value = "";
-  randomOption.textContent = "cycle through all";
-  eventSelector.appendChild(randomOption);
-
-  const voiceOptionsContainer = document.createElement("div");
-  voiceOptionsContainer.className = "voice-options";
-
-  const buttonText = {
-    play: "Play &#9658;",
-  };
-
-  const playButton = document.createElement("button");
-  playButton.type = "button";
-  playButton.innerHTML = buttonText.play;
-  playButton.disabled = true;
-
-  voiceLabelMap.map(([label, voiceType]) => {
-    const voiceOption = document.createElement("div");
-    voiceOption.className = "voice-option";
-
-    const input = document.createElement("input");
-    input.type = "radio";
-    input.name = "voice";
-    input.value = voiceType;
-    input.id = `voice-${voiceType}`;
-
-    const labelElement = document.createElement("label");
-    labelElement.htmlFor = `voice-${voiceType}`;
-    labelElement.textContent = label;
-
-    voiceOption.appendChild(input);
-    voiceOption.appendChild(labelElement);
-    voiceOptionsContainer.appendChild(voiceOption);
-
-    voiceOption.addEventListener("click", () => {
-      playButton.disabled = false;
+  connectedCallback() {
+    this.addEventListener("click", () => {
+      // this.focus();
+      this.play();
     });
-  });
+    this.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        this.play();
+      }
+    });
+  }
 
-  root.appendChild(voiceForm);
-  voiceForm.appendChild(eventSelector);
-  voiceForm.appendChild(voiceOptionsContainer);
-  voiceForm.appendChild(playButton);
+  async play() {
+    const voiceType = this.getAttribute("type") as VoiceType;
+    const eventSelector = document.getElementById(
+      "voice_event"
+    ) as HTMLSelectElement | null;
+    const event = (eventSelector?.value as PlayerEvent) ?? "voice_select";
+    const cycleEvents =
+      (document.getElementById("cycle_all") as HTMLInputElement | null)
+        ?.checked ?? false;
 
-  const audioPlayer = new Audio();
-  let isPlaying = false;
-  audioPlayer.preload = "auto";
-
-  audioPlayer.onplay = () => {
-    // playButton.innerHTML = buttonText.playing;
-    isPlaying = true;
-  };
-
-  audioPlayer.onpause = () => {
-    playButton.innerHTML = buttonText.play;
-    isPlaying = false;
-  };
-
-  audioPlayer.onended = () => {
-    playButton.innerHTML = buttonText.play;
-    isPlaying = false;
-  };
-
-  audioPlayer.onerror = () => {
-    console.error("Error loading audio file:", audioPlayer.error);
-    playButton.innerHTML = buttonText.play;
-    isPlaying = false;
-  };
-
-  let lastPlayedAudio: AudioFileParts | null = null;
-  playButton.addEventListener("click", (e) => {
-    e.preventDefault();
-
-    const selectedVoice = (
-      voiceForm.elements.namedItem("voice") as HTMLInputElement
-    ).value as VoiceType | "";
-    let selectedEvent = (
-      voiceForm.elements.namedItem("event") as HTMLSelectElement
-    ).value as PlayerEvent | "";
-
-    if (selectedVoice === "") {
-      alert("Please select a voice before playing.");
+    if (!voiceType || !event) {
+      console.error("Voice type or event not set.");
       return;
     }
 
-    if (selectedEvent === "") {
-      selectedEvent = getNextEvent(lastPlayedAudio, selectedVoice);
-    }
-
-    const audioFile = {
-      voiceType: selectedVoice,
-      event: selectedEvent,
-      number: getNextNumber(lastPlayedAudio, {
-        voiceType: selectedVoice,
-        event: selectedEvent,
-      }),
+    const audioParts: AudioFileParts = {
+      voiceType,
+      event,
+      number: getNextNumber(lastPlayedAudio, { voiceType, event }),
     };
 
-    lastPlayedAudio = audioFile;
-    playAudio(audioFile, audioPlayer).catch((err) =>
-      console.error("Error playing audio:", err)
-    );
-  });
+    const nextEvent = getNextEvent(lastPlayedAudio, voiceType);
+    if (
+      cycleEvents &&
+      lastPlayedAudio?.event === event &&
+      lastPlayedAudio?.voiceType === voiceType &&
+      audioParts.event !== nextEvent
+    ) {
+      audioParts.event = nextEvent;
+      if (eventSelector) eventSelector.value = nextEvent;
+    }
+
+    lastPlayedAudio = audioParts;
+    return playAudio(audioParts, player);
+  }
 }
+
+window.customElements.define("voice-option", VoiceOption);

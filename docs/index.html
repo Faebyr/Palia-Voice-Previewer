@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Palia Voice Previewer</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="main.js" defer id="mainScript"></script>
+    <script src="main.js" defer></script>
 </head>
 
 <body>
@@ -19,16 +19,56 @@
                 <p>Please enable JavaScript to use this application.</p>
             </div>
         </noscript>
+        <div id="settings">
+            <label>
+                <span>Event:</span>
+                <select id="voice_event">
+                    <option value="voice_select" selected>Voice Select</option>
+                    <option value="angry">Angry</option>
+                    <option value="cheer">Cheer</option>
+                    <option value="confused">Confused</option>
+                    <option value="exert_medium">Exert Medium</option>
+                    <option value="exert_small">Exert Small</option>
+                    <option value="flirt">Flirt</option>
+                    <option value="gen_t1">Gen T1</option>
+                    <option value="gen_t2">Gen T2</option>
+                    <option value="gen_t3">Gen T3</option>
+                    <option value="gen_t4">Gen T4</option>
+                    <option value="greet">Greet</option>
+                    <option value="hitreact_large">Hitreact Large</option>
+                    <option value="hitreact_medium">Hitreact Medium</option>
+                    <option value="hitreact_small">Hitreact Small</option>
+                    <option value="jump">Jump</option>
+                    <option value="land_stunned">Land Stunned</option>
+                    <option value="land">Land</option>
+                    <option value="laugh">Laugh</option>
+                    <option value="point">Point</option>
+                    <option value="thanks">Thanks</option>
+                    <option value="yawn">Yawn</option>
+                </select>
+            </label>
+            <label>
+                <input type="checkbox" id="cycle_all">
+                Cycle through all events
+            </label>
+        </div>
+        <div class="voice-options">
+            <voice-option type="female_a">Voice 1</voice-option>
+            <voice-option type="female_b">Voice 2</voice-option>
+            <voice-option type="female_c">Voice 3</voice-option>
+            <voice-option type="female_d">Voice 4</voice-option>
+            <voice-option type="female_e">Voice 5</voice-option>
+            <voice-option type="male_a">Voice 6</voice-option>
+            <voice-option type="male_b">Voice 7</voice-option>
+            <voice-option type="male_c">Voice 8</voice-option>
+            <voice-option type="male_d">Voice 9</voice-option>
+            <voice-option type="male_e">Voice 10</voice-option>
+        </div>
+        
+        <audio id="audio_player" controls disabled>
+            Your browser does not support the audio element.
+        </audio>
     </main>
-    <script>
-        const root = document.getElementById('root')
-        root.textContent = "Loading..."
-        const script = document.getElementById('mainScript')
-        script.addEventListener('load', () => {
-            root.textContent = ""
-            createAudioPlayerForm(root)
-        })
-    </script>
 </body>
 
 </html>
