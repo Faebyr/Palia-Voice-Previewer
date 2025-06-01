@@ -1,0 +1,67 @@
+body {
+    background-color: #333;
+    color: #fff;
+    font-family: sans-serif;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+main form {
+    display: grid;
+    gap: 20px;
+    padding: 20px;
+}
+
+.voice-options {
+    display: grid;
+    /* this should be a grid with 5 columns */
+    grid-template-columns: repeat(5, 1fr);
+    gap: 24px 5%;
+    margin-bottom: 20px;
+}
+
+.voice-option input {
+    display: none;
+}
+
+.voice-option label {
+    display: block;
+    padding: 24px 16px;
+    background-color: #444;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.voice-option input:checked + label {
+    background-color: #555;
+}
+
+select {
+    padding: 12px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    background-color: #444;
+    color: white;
+    font-size: 16px;
+    margin: 0 auto;
+}
+
+button {
+    padding: 12px 24px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+    margin: 0 auto;
+}
+
+@media (max-width: 600px) {
+    .voice-options {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
